@@ -8,6 +8,14 @@ const handler = NextAuth({
     GithubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          image: profile.avatar_url,
+        };
+      },
     }),
   ],
   callbacks: {
@@ -18,23 +26,23 @@ const handler = NextAuth({
       session.user.id = sessionUser._id.toString();
       return session;
     },
-    async signIn({ profile }) {
+    async signIn({ user }) {
       try {
-        if (!profile) {
+        if (!user) {
           return false;
         }
 
         await connectToDB();
 
         const userExists = await User.findOne({
-          email: profile.email,
+          email: user.email,
         });
 
         if (!userExists) {
           await User.create({
-            email: profile.email,
-            username: profile.name?.replace(' ', '').toLowerCase(),
-            image: profile.image,
+            email: user.email,
+            username: user.name?.replace(' ', '').toLowerCase(),
+            image: user.image,
           });
         }
 
